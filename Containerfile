@@ -1,14 +1,19 @@
+ARG IMAGE_VERSION
 # Allow build scripts to be referenced without being copied into the final image
 FROM scratch AS ctx
 COPY build_files /
 COPY system_files /system_files
 
+# Builder image
+FROM quay.io/fedora-ostree-desktops/silverblue:${IMAGE_VERSION} AS kernel-builder-surface
+# Fedora base image: quay.io/fedora/fedora-bootc:${IMAGE_VERSION}
+RUN --mount=type=cache,dst=/var/cache/libdnf5 \
+    --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=secret,id=secureboot_key,required=false \
+    /ctx/kernel-builder.sh
+
 # Base Image
-FROM ghcr.io/ublue-os/bluefin:stable
-# ... and so on, here are more base images
-# Universal Blue Images: https://github.com/orgs/ublue-os/packages
-# Fedora base image: quay.io/fedora/fedora-bootc:44
-# CentOS base images: quay.io/centos-bootc/centos-bootc:stream10
+FROM ghcr.io/ublue-os/bluefin:${IMAGE_VERSION}
 
 ### [IM]MUTABLE /opt
 ## Some bootable images, like Fedora, have /opt symlinked to /var/opt, in order to
@@ -30,6 +35,13 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
     /ctx/build.sh
+
+RUN --mount=type=cache,dst=/var/cache/libdnf5 \
+    --mount=type=cache,dst=/var/cache/rpm-ostree \
+    --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=bind,from=kernel-builder-surface,source=/out,target=/kernel-out \
+    /ctx/surface.sh && \
+    /ctx/variant-finish.sh
 
 ### LINTING
 ## Verify final image and contents are correct.

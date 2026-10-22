@@ -1,9 +1,10 @@
-set dotenv-filename := "image-template.env"
+set dotenv-filename := "bluefin-surface.env"
 set dotenv-load
 
 export image_name := env_var("IMAGE_NAME")
 export repo_organization := env_var("REPO_ORGANIZATION")
 export image_desc := env_var("IMAGE_DESC")
+export image_version := env_var("IMAGE_VERSION")
 export image_keywords := env_var("IMAGE_KEYWORDS")
 export image_logo_url := env_var("IMAGE_LOGO_URL")
 export default_tag := env_var("DEFAULT_TAG")
@@ -99,6 +100,7 @@ build $target_image=image_name $tag=default_tag:
     set -euox pipefail
 
     BUILD_ARGS=()
+    BUILD_ARGS+=(--build-arg IMAGE_VERSION={{image_version}})
     LABELS=()
     if [[ -z "$(git status -s)" ]]; then
         GIT_SHA=$(git rev-parse --short HEAD)
