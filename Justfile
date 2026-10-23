@@ -100,7 +100,7 @@ build $target_image=image_name $tag=default_tag:
     set -euox pipefail
 
     BUILD_ARGS=()
-    BUILD_ARGS+=(--build-arg IMAGE_VERSION={{image_version}})
+    BUILD_ARGS+=(--build-arg IMAGE_VERSION={{ image_version }})
     LABELS=()
     if [[ -z "$(git status -s)" ]]; then
         GIT_SHA=$(git rev-parse --short HEAD)
